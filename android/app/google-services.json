@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "306133157985",
+    "project_id": "catchafire-74466",
+    "storage_bucket": "catchafire-74466.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:306133157985:android:d29c02ae23eeaa97154220",
+        "android_client_info": {
+          "package_name": "AndroidManifest.xml"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmZ7LXLrxN1HeK984AUpDsCyptr4_ZHdM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:306133157985:android:d7724cd867785d06154220",
+        "android_client_info": {
+          "package_name": "com.example.catchafire"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmZ7LXLrxN1HeK984AUpDsCyptr4_ZHdM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:306133157985:android:8fe90e6000d03d31154220",
+        "android_client_info": {
+          "package_name": "com.example.catchafire_backend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmZ7LXLrxN1HeK984AUpDsCyptr4_ZHdM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,28 @@
+{
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "catchafire-74466",
+          "appId": "1:306133157985:android:d7724cd867785d06154220",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "catchafire-74466",
+          "configurations": {
+            "android": "1:306133157985:android:d7724cd867785d06154220",
+            "ios": "1:306133157985:ios:ee535e530074ffa5154220",
+            "macos": "1:306133157985:ios:ee535e530074ffa5154220",
+            "web": "1:306133157985:web:ba58d979655513bd154220",
+            "windows": "1:306133157985:web:03632f7569f2598c154220"
+          }
+        }
+      }
+    }
+  }
+}
