@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, avoid_print
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -59,7 +59,7 @@ class EventDetailPageState extends State<EventDetailPage> {
       }
 
       print('DEBUG: Event data: ${eventDoc.data()}');
-      
+
       // Get phone number directly from event document
       final phone = eventDoc.data()?['organizerPhone'] as String?;
       print('DEBUG: Raw phone value: $phone');
@@ -212,7 +212,7 @@ class EventDetailPageState extends State<EventDetailPage> {
   @override
   Widget build(BuildContext context) {
     print('DEBUG: Event Details - Image URL: ${widget.imageUrl}');
-    
+
     return Scaffold(
       backgroundColor: const Color.fromRGBO(250, 249, 245, 1),
       appBar: AppBar(
@@ -228,7 +228,8 @@ class EventDetailPageState extends State<EventDetailPage> {
             children: [
               if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty) ...[
                 Builder(builder: (context) {
-                  print('DEBUG: Attempting to load image from: ${widget.imageUrl}');
+                  print(
+                      'DEBUG: Attempting to load image from: ${widget.imageUrl}');
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.network(
@@ -237,7 +238,8 @@ class EventDetailPageState extends State<EventDetailPage> {
                       width: double.infinity,
                       fit: BoxFit.cover,
                       loadingBuilder: (context, child, loadingProgress) {
-                        print('DEBUG: Image loading progress: ${loadingProgress?.expectedTotalBytes}');
+                        print(
+                            'DEBUG: Image loading progress: ${loadingProgress?.expectedTotalBytes}');
                         if (loadingProgress == null) {
                           print('DEBUG: Image loaded successfully');
                           return child;
@@ -261,15 +263,18 @@ class EventDetailPageState extends State<EventDetailPage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                              const Icon(Icons.broken_image,
+                                  size: 40, color: Colors.grey),
                               const SizedBox(height: 8),
                               const Text('Failed to load image'),
                               const SizedBox(height: 4),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
                                 child: Text(
                                   'URL: ${widget.imageUrl}',
-                                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                  style: const TextStyle(
+                                      fontSize: 10, color: Colors.grey),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.center,
@@ -356,7 +361,9 @@ class EventDetailPageState extends State<EventDetailPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            _hasRSVPed ? Icons.check_circle : Icons.calendar_today,
+                            _hasRSVPed
+                                ? Icons.check_circle
+                                : Icons.calendar_today,
                             size: 20,
                           ),
                           const SizedBox(width: 8),

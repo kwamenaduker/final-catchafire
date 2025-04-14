@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print, use_build_context_synchronously
+// ignore_for_file: avoid_print, use_build_context_synchronously, unused_element
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -114,31 +114,34 @@ class _DiscoverPageState extends State<DiscoverPage> {
       final snapshot =
           await FirebaseFirestore.instance.collection('events').get();
       print('DEBUG: Found ${snapshot.docs.length} events');
-      
+
       final events = snapshot.docs.map((doc) {
         final data = doc.data();
         print('DEBUG: Processing event ${doc.id}');
-        
+
         // Handle the image URL - convert Google Drive URLs
         String? imageUrl = data['imageUrl'] as String?;
-        print('DEBUG: Raw imageUrl from Firestore for event ${doc.id}: $imageUrl');
-        
+        print(
+            'DEBUG: Raw imageUrl from Firestore for event ${doc.id}: $imageUrl');
+
         if (imageUrl != null) {
           if (imageUrl.contains('drive.google.com')) {
             final convertedUrl = _convertGoogleDriveUrl(imageUrl);
             print('DEBUG: Converted Google Drive URL: $convertedUrl');
             imageUrl = convertedUrl;
           }
-          
-          if (imageUrl != null && 
-              (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
+
+          if (imageUrl != null &&
+              (imageUrl.startsWith('http://') ||
+                  imageUrl.startsWith('https://'))) {
             print('DEBUG: Valid URL found for event ${doc.id}: $imageUrl');
           } else {
-            print('DEBUG: Invalid image URL format for event ${doc.id}, resetting to null');
+            print(
+                'DEBUG: Invalid image URL format for event ${doc.id}, resetting to null');
             imageUrl = null;
           }
         }
-        
+
         final eventData = {
           'id': doc.id,
           'title': data['title'] ?? 'Untitled Event',
@@ -149,8 +152,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
           'skills': data['skills'] ?? [],
           'location': data['location'] ?? 'Location not specified',
           'description': data['description'] ?? 'No description available',
-          'imageUrl': imageUrl,  // Keep the original URL
-          'organizerId': data['userId'] ?? data['organizerId'],  // Try both fields
+          'imageUrl': imageUrl, // Keep the original URL
+          'organizerId':
+              data['userId'] ?? data['organizerId'], // Try both fields
         };
         print('DEBUG: Event ${doc.id} data:');
         print('DEBUG: - imageUrl: $imageUrl');
@@ -215,20 +219,24 @@ class _DiscoverPageState extends State<DiscoverPage> {
                             title: event['title'],
                             onTap: () {
                               final imageUrl = event['imageUrl'];
-                              print('DEBUG: Passing imageUrl to EventDetailPage: $imageUrl'); // Add debug print
+                              print(
+                                  'DEBUG: Passing imageUrl to EventDetailPage: $imageUrl'); // Add debug print
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => EventDetailPage(
                                     eventId: event['id'],
                                     eventTitle: event['title'],
-                                    eventDate: event['date'] is Timestamp 
-                                        ? DateFormat('MMM dd, yyyy').format(event['date'].toDate())
+                                    eventDate: event['date'] is Timestamp
+                                        ? DateFormat('MMM dd, yyyy')
+                                            .format(event['date'].toDate())
                                         : event['date'].toString(),
                                     eventLocation: event['location'],
                                     eventDescription: event['description'],
-                                    imageUrl: event['imageUrl'],  // Pass the raw imageUrl
-                                    skills: List<String>.from(event['skills'] ?? []),
+                                    imageUrl: event[
+                                        'imageUrl'], // Pass the raw imageUrl
+                                    skills: List<String>.from(
+                                        event['skills'] ?? []),
                                   ),
                                 ),
                               );
@@ -261,9 +269,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
               ),
               Text('Hosted by: ${event['organization']}'),
               Text('Location: ${event['location']}'),
-              Text('Date: ${event['date'] is Timestamp 
-                  ? DateFormat('MMM dd, yyyy').format(event['date'].toDate())
-                  : event['date'].toString()}'),
+              Text(
+                  'Date: ${event['date'] is Timestamp ? DateFormat('MMM dd, yyyy').format(event['date'].toDate()) : event['date'].toString()}'),
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () {
@@ -274,8 +281,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
                       builder: (context) => EventDetailPage(
                         eventId: event['id'],
                         eventTitle: event['title'],
-                        eventDate: event['date'] is Timestamp 
-                            ? DateFormat('MMM dd, yyyy').format(event['date'].toDate())
+                        eventDate: event['date'] is Timestamp
+                            ? DateFormat('MMM dd, yyyy')
+                                .format(event['date'].toDate())
                             : event['date'].toString(),
                         eventLocation: event['location'],
                         eventDescription: event['description'],
