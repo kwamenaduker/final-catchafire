@@ -50,6 +50,10 @@ class _PostPageState extends State<PostPage> {
     try {
       var request = http.MultipartRequest('POST',
           Uri.parse('https://catchafire-28b4936a7553.herokuapp.com/upload'));
+
+      request.headers['Content-Type'] = 'multipart/form-data';
+      request.headers['Accept'] = 'application/json';
+
       request.files
           .add(await http.MultipartFile.fromPath('image', imageFile.path));
       var response = await request.send();
