@@ -155,6 +155,134 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _showDeleteEventDialog(String eventId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Event"),
+        content: const Text(
+            "Are you sure you want to delete this event? This action cannot be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              // Delete the event from Firestore
+              await FirebaseFirestore.instance
+                  .collection('events')
+                  .doc(eventId)
+                  .delete();
+
+              if (!mounted) return;
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Event deleted successfully")),
+              );
+            },
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditEventDialog(Map<String, dynamic> event) {
+    final titleController = TextEditingController(text: event['title']);
+    final descriptionController =
+        TextEditingController(text: event['description']);
+    final locationController = TextEditingController(text: event['location']);
+
+    DateTime selectedDate = event['date'] is Timestamp
+        ? (event['date'] as Timestamp).toDate()
+        : DateTime.now();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Edit Event"),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: "Event Title"),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: "Description"),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: locationController,
+                decoration: const InputDecoration(labelText: "Location"),
+              ),
+              const SizedBox(height: 15),
+              ListTile(
+                title: Text(
+                    "Date: ${_formatEventDate(Timestamp.fromDate(selectedDate))}"),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () async {
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null && picked != selectedDate) {
+                    selectedDate = picked;
+                    // Rebuild dialog to show new date (simplified approach)
+                    Navigator.of(context).pop();
+                    _showEditEventDialog({
+                      ...event,
+                      'title': titleController.text,
+                      'description': descriptionController.text,
+                      'location': locationController.text,
+                      'date': Timestamp.fromDate(selectedDate),
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              // Update the event in Firestore
+              await FirebaseFirestore.instance
+                  .collection('events')
+                  .doc(event['id'])
+                  .update({
+                'title': titleController.text,
+                'description': descriptionController.text,
+                'location': locationController.text,
+                'date': Timestamp.fromDate(selectedDate),
+                'updatedAt': Timestamp.now(),
+              });
+
+              if (!mounted) return;
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Event updated successfully")),
+              );
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _navigateToEventDetails(Map<String, dynamic> event) {
     Navigator.push(
       context,
@@ -461,6 +589,8 @@ class _ProfilePageState extends State<ProfilePage> {
         : DateTime.now();
 
     final formattedDate = '${date.day} ${_monthName(date.month)}, ${date.year}';
+    final isUserEvent =
+        event['userId'] == FirebaseAuth.instance.currentUser?.uid;
 
     return GestureDetector(
       onTap: onTap,
@@ -473,10 +603,32 @@ class _ProfilePageState extends State<ProfilePage> {
           border: Border.all(color: Colors.grey.shade300),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Flexible(child: Text(title, style: const TextStyle(fontSize: 16))),
-            Text(formattedDate, style: const TextStyle(color: Colors.grey)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 16)),
+                  const SizedBox(height: 4),
+                  Text(formattedDate,
+                      style: const TextStyle(color: Colors.grey)),
+                ],
+              ),
+            ),
+            // Only show edit/delete options if the event belongs to the user
+            if (isUserEvent)
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () => _showEditEventDialog(event),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _showDeleteEventDialog(event['id']),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
