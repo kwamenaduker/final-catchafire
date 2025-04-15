@@ -24,6 +24,7 @@ class _PostPageState extends State<PostPage> {
   final _titleController = TextEditingController();
   final _orgController = TextEditingController();
   final _locationController = TextEditingController();
+  final _descriptionController = TextEditingController();
   DateTime? _selectedDate;
 
   final List<String> _allSkills = [
@@ -121,6 +122,7 @@ class _PostPageState extends State<PostPage> {
         'title': _titleController.text.trim(),
         'organization': _orgController.text.trim(),
         'location': _locationController.text.trim(),
+        'description': _descriptionController.text.trim(),
         'date': _selectedDate,
         'imageUrl': imageUrl,
         'latitude': lat,
@@ -144,6 +146,7 @@ class _PostPageState extends State<PostPage> {
           _titleController.clear();
           _orgController.clear();
           _locationController.clear();
+          _descriptionController.clear();
           _selectedDate = null;
           _selectedSkills.clear();
         });
@@ -337,6 +340,12 @@ class _PostPageState extends State<PostPage> {
             TextField(
               controller: _locationController,
               decoration: _inputStyle("e.g. Legon Campus"),
+            ),
+            _buildLabel("Event Description"),
+            TextField(
+              controller: _descriptionController,
+              decoration: _inputStyle("Describe the event in detail"),
+              maxLines: 5, // Allow multiple lines for the description
             ),
             _buildLabel("Date"),
             GestureDetector(
