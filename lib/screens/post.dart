@@ -5,8 +5,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:path/path.dart' as path;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firebase_service.dart';
@@ -48,29 +46,22 @@ class _PostPageState extends State<PostPage> {
 
   Future<String?> _uploadImageToServer(File imageFile) async {
     try {
-      print('DEBUG: Starting image upload to Firebase Storage');
-      print('DEBUG: Image file path: ${imageFile.path}');
-      print('DEBUG: Image file exists: ${await imageFile.exists()}');
-      
-      // Create a unique filename using timestamp
-      final fileName = 'events/${DateTime.now().millisecondsSinceEpoch}_${path.basename(imageFile.path)}';
-      print('DEBUG: Generated filename: $fileName');
-      
-      final ref = FirebaseStorage.instance.ref().child(fileName);
-      print('DEBUG: Created storage reference');
-      
-      // Upload the file
-      print('DEBUG: Starting file upload...');
-      final uploadTask = await ref.putFile(imageFile);
-      print('DEBUG: Upload completed. Success: ${uploadTask.state == TaskState.success}');
-      
-      // Get the download URL
-      final downloadUrl = await ref.getDownloadURL();
-      print('DEBUG: Got download URL: $downloadUrl');
-      return downloadUrl;
-    } catch (e, stackTrace) {
-      print("DEBUG: Error uploading image: $e");
-      print("DEBUG: Stack trace: $stackTrace");
+      var request = http.MultipartRequest('POST',
+          Uri.parse('https://catchafire-28b4936a7553.herokuapp.com/upload'));
+      request.files
+          .add(await http.MultipartFile.fromPath('image', imageFile.path));
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final data = json.decode(responseBody);
+        return data['viewLink'];
+      } else {
+        print("Failed to upload image to server.");
+        return null;
+      }
+    } catch (e) {
+      print("Error uploading image: $e");
       return null;
     }
   }
@@ -96,7 +87,7 @@ class _PostPageState extends State<PostPage> {
 
       print('DEBUG: Starting form submission');
       print('DEBUG: Cover photo path: ${_coverPhoto?.path}');
-      
+
       final imageUrl = await _uploadImageToServer(_coverPhoto!);
       if (imageUrl == null) {
         throw "Image upload failed";
