@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firebase_service.dart';
+import 'home.dart';
 
 class PostPage extends StatefulWidget {
   const PostPage({super.key});
@@ -100,18 +101,16 @@ class _PostPageState extends State<PostPage> {
       final lat = coords['lat'];
       final lng = coords['lng'];
 
-      // Get current user and their profile data
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw "User not authenticated";
 
-      // Get user's profile data
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
 
       print('DEBUG: User data from profile: ${userDoc.data()}');
-      final phoneNumber = userDoc.data()?['phoneNumber'] as String?;
+      final phoneNumber = userDoc.data()?['phone'] as String?;
       print('DEBUG: Found phone number in profile: $phoneNumber');
 
       if (phoneNumber == null || phoneNumber.isEmpty) {
@@ -148,6 +147,11 @@ class _PostPageState extends State<PostPage> {
           _selectedDate = null;
           _selectedSkills.clear();
         });
+
+        // Navigate back to home screen
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
       }
     } catch (e) {
       print('DEBUG: Error in _submitForm: $e');

@@ -1,12 +1,13 @@
-// ignore_for_file: deprecated_member_use, use_build_context_synchronously, unused_element
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously, unused_element, avoid_print
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'event_details.dart';
 import 'login.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -17,7 +18,6 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? userData;
-  List<Map<String, dynamic>> userEvents = [];
   List<Map<String, dynamic>> rsvpEvents = [];
 
   int totalEvents = 0;
@@ -29,7 +29,6 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     fetchUserInfo();
-    fetchUserEvents();
     fetchRsvpEvents();
   }
 
@@ -68,25 +67,6 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  Future<void> fetchUserEvents() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    final querySnapshot = await FirebaseFirestore.instance
-        .collection('events')
-        .where('userId', isEqualTo: uid)
-        .orderBy('date', descending: true)
-        .get();
-
-    setState(() {
-      userEvents = querySnapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id; // Store the document ID
-        return data;
-      }).toList();
-    });
-  }
-
   Future<void> _updateProfilePicture() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -96,28 +76,52 @@ class _ProfilePageState extends State<ProfilePage> {
         _profileImage = File(pickedFile.path);
       });
 
-      final user = FirebaseAuth.instance.currentUser;
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('profile_pictures/${user?.uid}.jpg');
+      // Upload the image to the server
+      final imageUrl = await _uploadImageToServer(_profileImage!);
 
-      try {
-        await storageRef.putFile(_profileImage!);
-        final url = await storageRef.getDownloadURL();
+      if (imageUrl != null) {
+        final user = FirebaseAuth.instance.currentUser;
 
+        // Update the profile picture in Firestore with the returned URL
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user?.uid)
-            .update({'profilePicture': url});
+            .update({'profilePicture': imageUrl});
 
         setState(() {
-          userData?['profilePicture'] = url;
+          userData?['profilePicture'] = imageUrl;
         });
-      } catch (e) {
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Error updating profile picture")),
+          const SnackBar(content: Text("Profile picture updated successfully")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error uploading profile picture")),
         );
       }
+    }
+  }
+
+  Future<String?> _uploadImageToServer(File imageFile) async {
+    try {
+      var request = http.MultipartRequest('POST',
+          Uri.parse('https://catchafire-28b4936a7553.herokuapp.com/upload'));
+      request.files
+          .add(await http.MultipartFile.fromPath('image', imageFile.path));
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final data = json.decode(responseBody);
+        return data['viewLink']; // Assuming the server returns a 'viewLink' key
+      } else {
+        print("Failed to upload image to server.");
+        return null;
+      }
+    } catch (e) {
+      print("Error uploading image: $e");
+      return null;
     }
   }
 
@@ -386,6 +390,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildPastEventsSection() {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return const SizedBox();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -398,8 +405,18 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         const SizedBox(height: 12),
-        userEvents.isEmpty
-            ? Container(
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('events')
+              .where('userId', isEqualTo: userId)
+              .orderBy('createdAt', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Container(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 alignment: Alignment.center,
                 child: const Text(
@@ -411,15 +428,28 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-              )
-            : Column(
-                children: userEvents
-                    .map((event) => _buildEventItem(
-                          event,
-                          onTap: () => _navigateToEventDetails(event),
-                        ))
-                    .toList(),
-              ),
+              );
+            }
+
+            final events = snapshot.data!.docs;
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: events.length,
+              itemBuilder: (context, index) {
+                final event = events[index].data() as Map<String, dynamic>;
+                // Add the document ID to the event data
+                final eventWithId = Map<String, dynamic>.from(event);
+                eventWithId['id'] = events[index].id;
+
+                return _buildEventItem(
+                  eventWithId,
+                  onTap: () => _navigateToEventDetails(eventWithId),
+                );
+              },
+            );
+          },
+        ),
       ],
     );
   }
